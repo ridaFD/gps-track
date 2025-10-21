@@ -1,8 +1,18 @@
-import React from 'react';
-import { Menu, Search, Bell, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { Menu, Search, Bell, User, LogOut } from 'lucide-react';
+import { getUser, logout } from '../services/auth';
 import './Header.css';
 
 const Header = ({ toggleSidebar }) => {
+  const user = getUser();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      logout();
+    }
+  };
+
   return (
     <header className="header">
       <div className="header-left">
@@ -24,11 +34,28 @@ const Header = ({ toggleSidebar }) => {
           <Bell size={20} />
           <span className="notification-badge">3</span>
         </button>
-        <div className="user-profile">
-          <div className="user-avatar">
-            <User size={18} />
+        <div className="user-profile-container">
+          <div 
+            className="user-profile" 
+            onClick={() => setShowUserMenu(!showUserMenu)}
+          >
+            <div className="user-avatar">
+              <User size={18} />
+            </div>
+            <span className="user-name">{user?.name || 'User'}</span>
           </div>
-          <span className="user-name">Admin User</span>
+          {showUserMenu && (
+            <div className="user-menu">
+              <div className="user-menu-header">
+                <p className="user-menu-name">{user?.name}</p>
+                <p className="user-menu-email">{user?.email}</p>
+              </div>
+              <button className="user-menu-item" onClick={handleLogout}>
+                <LogOut size={16} />
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

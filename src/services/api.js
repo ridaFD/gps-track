@@ -148,13 +148,16 @@ export const alertRulesAPI = {
 // Reports API
 export const reportsAPI = {
   generate: (type, params) => 
-    apiClient.post('/reports', { type, ...params }),
+    apiClient.post('/reports/generate', { type, ...params }),
   
   getStatus: (jobId) => 
-    apiClient.get(`/reports/${jobId}`),
+    apiClient.get(`/reports/status/${jobId}`),
   
-  download: (reportId) => 
-    apiClient.get(`/reports/${reportId}/download`, { responseType: 'blob' }),
+  download: (filename) => 
+    apiClient.get(`/reports/download/${filename}`, { responseType: 'blob' }),
+  
+  delete: (filename) => 
+    apiClient.delete(`/reports/delete/${filename}`),
   
   getAll: (params = {}) => 
     apiClient.get('/reports', { params }),

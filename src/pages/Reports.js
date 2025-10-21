@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { FileText, Download, Calendar, Filter, TrendingUp, TrendingDown, Activity } from 'lucide-react';
+import { FileText, Download, Calendar, Filter, TrendingUp, TrendingDown, Activity, Loader, Trash2 } from 'lucide-react';
+import { reportsAPI } from '../services/api';
 import './Reports.css';
 
 const Reports = () => {
   const [dateRange, setDateRange] = useState('last7days');
   const [selectedReport, setSelectedReport] = useState('overview');
+  const [loading, setLoading] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [availableReports, setAvailableReports] = useState([]);
+  const [notification, setNotification] = useState(null);
 
   // Mock data for various reports
   const distanceData = [
@@ -55,16 +60,162 @@ const Reports = () => {
     { label: 'Avg. Speed', value: '52 km/h', change: '+2.1%', trend: 'up' }
   ];
 
+  // Fetch available reports from backend
+  useEffect(() => {
+    fetchAvailableReports();
+  }, []);
+
+  const fetchAvailableReports = async () => {
+    try {
+      const response = await reportsAPI.getAll();
+      if (response && response.reports) {
+        setAvailableReports(response.reports);
+      }
+    } catch (error) {
+      console.error('Failed to fetch reports:', error);
+    }
+  };
+
+  // Generate new report
+  const handleGenerateReport = async (reportType) => {
+    setGeneratingReport(true);
+    setNotification(null);
+    
+    try {
+      // Determine report type based on selected tab
+      let type = 'devices';
+      if (selectedReport === 'distance') type = 'trips';
+      if (selectedReport === 'fuel') type = 'alerts';
+      if (reportType) type = reportType;
+
+      const params = {
+        from: getDateRangeStart(),
+        to: new Date().toISOString(),
+      };
+
+      const response = await reportsAPI.generate(type, params);
+      
+      showNotification('success', `${type.charAt(0).toUpperCase() + type.slice(1)} report is being generated! It will be ready for download shortly.`);
+      
+      // Refresh available reports after a delay
+      setTimeout(() => {
+        fetchAvailableReports();
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Failed to generate report:', error);
+      showNotification('error', 'Failed to generate report. Please try again.');
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
+
+  // Download report
+  const handleDownloadReport = async (filename) => {
+    setLoading(true);
+    try {
+      const blob = await reportsAPI.download(filename);
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      showNotification('success', `Report "${filename}" downloaded successfully!`);
+    } catch (error) {
+      console.error('Failed to download report:', error);
+      showNotification('error', 'Failed to download report. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete report
+  const handleDeleteReport = async (filename) => {
+    // Confirmation dialog
+    if (!window.confirm(`Are you sure you want to delete "${filename}"?\n\nThis action cannot be undone.`)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await reportsAPI.delete(filename);
+      
+      showNotification('success', `Report "${filename}" deleted successfully!`);
+      
+      // Refresh the reports list
+      fetchAvailableReports();
+    } catch (error) {
+      console.error('Failed to delete report:', error);
+      showNotification('error', 'Failed to delete report. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get date range start based on selection
+  const getDateRangeStart = () => {
+    const now = new Date();
+    switch (dateRange) {
+      case 'today':
+        return new Date(now.setHours(0, 0, 0, 0)).toISOString();
+      case 'yesterday':
+        return new Date(now.setDate(now.getDate() - 1)).toISOString();
+      case 'last7days':
+        return new Date(now.setDate(now.getDate() - 7)).toISOString();
+      case 'last30days':
+        return new Date(now.setDate(now.getDate() - 30)).toISOString();
+      case 'thismonth':
+        return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      case 'lastmonth':
+        return new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+      default:
+        return new Date(now.setDate(now.getDate() - 7)).toISOString();
+    }
+  };
+
+  // Show notification
+  const showNotification = (type, message) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 5000);
+  };
+
   return (
     <div className="reports-page">
+      {/* Notification */}
+      {notification && (
+        <div className={`notification notification-${notification.type}`}>
+          <span>{notification.message}</span>
+          <button onClick={() => setNotification(null)}>×</button>
+        </div>
+      )}
+
       <div className="page-header">
         <div>
           <h1>Reports & Analytics</h1>
           <p className="page-subtitle">Generate comprehensive reports and analyze fleet performance</p>
         </div>
-        <button className="btn btn-primary">
-          <Download size={16} />
-          Export Report
+        <button 
+          className="btn btn-primary" 
+          onClick={() => handleGenerateReport()}
+          disabled={generatingReport}
+        >
+          {generatingReport ? (
+            <>
+              <Loader size={16} className="spinning" />
+              Generating...
+            </>
+          ) : (
+            <>
+              <Download size={16} />
+              Generate Report
+            </>
+          )}
         </button>
       </div>
 
@@ -117,6 +268,57 @@ const Reports = () => {
           </div>
         ))}
       </div>
+
+      {/* Available Reports */}
+      {availableReports.length > 0 && (
+        <div className="card" style={{ marginBottom: '20px' }}>
+          <h3 className="card-title">📥 Available Reports for Download</h3>
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Report Name</th>
+                  <th>Size</th>
+                  <th>Generated</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {availableReports.map((report, index) => (
+                  <tr key={index}>
+                    <td>
+                      <strong>{report.filename}</strong>
+                    </td>
+                    <td>{(report.size / 1024).toFixed(2)} KB</td>
+                    <td>{new Date(report.created_at * 1000).toLocaleString()}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          className="btn btn-sm btn-primary"
+                          onClick={() => handleDownloadReport(report.filename)}
+                          disabled={loading}
+                        >
+                          <Download size={14} />
+                          Download
+                        </button>
+                        <button
+                          className="btn btn-sm btn-danger"
+                          onClick={() => handleDeleteReport(report.filename)}
+                          disabled={loading}
+                          title="Delete this report"
+                        >
+                          <Trash2 size={14} />
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Report Content */}
       {selectedReport === 'overview' && (
