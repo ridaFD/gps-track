@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MapPin, Activity, AlertTriangle, TrendingUp, Navigation, Zap } from 'lucide-react';
+import { statisticsAPI, assetsAPI } from '../services/api';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './Dashboard.css';
@@ -17,8 +18,51 @@ L.Icon.Default.mergeOptions({
 const Dashboard = () => {
   const [assets, setAssets] = useState([]);
   const [selectedAsset, setSelectedAsset] = useState(null);
+  const [apiConnected, setApiConnected] = useState(false);
+  const [apiStats, setApiStats] = useState(null);
 
-  // Mock data for assets with random positions
+  // Test API connection and fetch real data
+  useEffect(() => {
+    const testApiConnection = async () => {
+      try {
+        console.log('🔄 Testing API connection...');
+        const [statsResponse, devicesResponse] = await Promise.all([
+          statisticsAPI.getDashboard(),
+          assetsAPI.getAll()
+        ]);
+        
+        console.log('✅ API Connected!', { stats: statsResponse, devices: devicesResponse });
+        setApiConnected(true);
+        setApiStats(statsResponse);
+        
+        // Use real data from API if available
+        if (devicesResponse?.data && devicesResponse.data.length > 0) {
+          const realAssets = devicesResponse.data.map(device => ({
+            id: device.id,
+            name: device.name,
+            type: device.type,
+            status: device.status,
+            position: device.last_position ? 
+              [device.last_position.lat, device.last_position.lng] : 
+              [40.7128, -74.0060],
+            speed: device.last_position?.speed || 0,
+            fuel: Math.random() * 100,
+            driver: 'Driver ' + device.id,
+            lastUpdate: new Date(device.last_position?.timestamp || new Date())
+          }));
+          setAssets(realAssets);
+          return; // Skip mock data
+        }
+      } catch (error) {
+        console.error('❌ API Connection Failed:', error);
+        setApiConnected(false);
+      }
+    };
+    
+    testApiConnection();
+  }, []);
+
+  // Mock data for assets with random positions (fallback)
   useEffect(() => {
     const mockAssets = [
       {
@@ -104,28 +148,28 @@ const Dashboard = () => {
   const stats = [
     {
       title: 'Total Assets',
-      value: assets.length,
+      value: apiStats?.total_assets || assets.length,
       change: '+12%',
       icon: MapPin,
       color: '#2563eb'
     },
     {
       title: 'Active Now',
-      value: assets.filter(a => a.status === 'moving' || a.status === 'active').length,
+      value: apiStats?.active_assets || assets.filter(a => a.status === 'moving' || a.status === 'active').length,
       change: '+8%',
       icon: Activity,
       color: '#10b981'
     },
     {
       title: 'Alerts Today',
-      value: '23',
+      value: apiStats?.alerts_today || '23',
       change: '-15%',
       icon: AlertTriangle,
       color: '#f59e0b'
     },
     {
       title: 'Total Distance',
-      value: '15.6K km',
+      value: apiStats?.distance_today ? `${apiStats.distance_today.toFixed(1)} km` : '15.6K km',
       change: '+24%',
       icon: TrendingUp,
       color: '#8b5cf6'
@@ -137,6 +181,18 @@ const Dashboard = () => {
       <div className="dashboard-header">
         <h1>Dashboard</h1>
         <div className="dashboard-actions">
+          <div className="api-status-badge" style={{ 
+            marginRight: '15px',
+            padding: '6px 12px',
+            borderRadius: '20px',
+            fontSize: '13px',
+            fontWeight: '600',
+            background: apiConnected ? '#10b98120' : '#ef444420',
+            color: apiConnected ? '#10b981' : '#ef4444',
+            border: `2px solid ${apiConnected ? '#10b981' : '#ef4444'}`
+          }}>
+            {apiConnected ? '✅ API Connected' : '⚠️ API Offline'}
+          </div>
           <button className="btn btn-secondary">
             <Navigation size={16} />
             Export Data
