@@ -75,6 +75,7 @@ This application replicates the core features of enterprise GPS tracking platfor
 
 ## 🛠️ Technology Stack
 
+### Frontend
 - **Frontend Framework**: React 19.2.0
 - **Routing**: React Router DOM
 - **Maps**: React-Leaflet with OpenStreetMap
@@ -82,6 +83,19 @@ This application replicates the core features of enterprise GPS tracking platfor
 - **Icons**: Lucide React
 - **Date Utilities**: date-fns
 - **Styling**: Custom CSS with modern design patterns
+- **API Client**: Axios
+- **WebSockets**: Laravel Echo + Pusher JS
+
+### Backend (Separate Repository)
+- **Backend Framework**: Laravel 11
+- **Database**: PostgreSQL + PostGIS, TimescaleDB
+- **Cache/Queue**: Redis
+- **Message Bus**: Kafka/NATS
+- **Admin Panel**: Orchid Platform
+- **Authentication**: Laravel Sanctum
+- **Real-time**: Laravel WebSockets
+
+👉 **Backend Repository**: [gps-track-backend](https://github.com/ridaFD/gps-track-backend)
 
 ## 📋 Prerequisites
 
@@ -90,9 +104,11 @@ This application replicates the core features of enterprise GPS tracking platfor
 
 ## 🔧 Installation
 
+### Frontend Setup
+
 1. **Clone the repository**:
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/ridaFD/gps-track.git
    cd gps-track
    ```
 
@@ -101,13 +117,40 @@ This application replicates the core features of enterprise GPS tracking platfor
    npm install
    ```
 
-3. **Start the development server**:
+3. **Configure environment** (optional for backend integration):
+   ```bash
+   cp .env.local.example .env.local
+   # Edit .env.local with your backend API URL
+   ```
+
+4. **Start the development server**:
    ```bash
    npm start
    ```
 
-4. **Open your browser**:
+5. **Open your browser**:
    Navigate to [http://localhost:3000](http://localhost:3000)
+
+### Backend Setup (Required for Production)
+
+For production use, you'll need to set up the backend API:
+
+1. **Clone the backend repository**:
+   ```bash
+   git clone https://github.com/ridaFD/gps-track-backend.git
+   cd gps-track-backend
+   ```
+
+2. **Follow the backend setup instructions**:
+   See [Backend README](https://github.com/ridaFD/gps-track-backend) for complete setup guide
+
+3. **Configure frontend to connect to backend**:
+   Update `.env.local` in the frontend project:
+   ```env
+   REACT_APP_API_URL=http://localhost:8000/api/v1
+   REACT_APP_WS_HOST=localhost
+   REACT_APP_WS_PORT=6001
+   ```
 
 ## 📦 Available Scripts
 
@@ -178,24 +221,38 @@ The application is fully responsive and adapts to:
 - Tablets (768px - 1366px)
 - Mobile devices (below 768px)
 
-## 🔐 Future Enhancements
+## 🔗 Related Projects
 
-Potential features for future versions:
-- User authentication and authorization
-- Multi-user support with role-based access
-- Integration with real GPS tracking devices
-- WebSocket for true real-time updates
-- Push notifications
-- Mobile app (React Native)
-- Advanced route optimization
-- Fuel cost calculator
-- Maintenance scheduling system
-- Integration with external APIs (weather, traffic, etc.)
-- Historical playback with route animation
-- Custom report builder
-- Email/SMS notifications
-- Video telematics integration
-- Driver behavior scoring
+- **Backend API**: [gps-track-backend](https://github.com/ridaFD/gps-track-backend) - Laravel backend with real-time telemetry
+- **Mobile App**: Coming soon (React Native)
+
+## 🔐 Production Deployment
+
+For production deployment:
+
+1. **Frontend**: Deploy to Vercel, Netlify, or any static hosting
+2. **Backend**: Deploy using Docker Compose or Kubernetes
+3. **Integration**: See [INTEGRATION.md](./INTEGRATION.md) for connecting frontend to backend
+
+## 🔮 Future Enhancements
+
+Features in development or planned:
+- ✅ Backend integration (separate repository)
+- ✅ Real-time WebSocket updates
+- ⬜ User authentication (frontend UI ready, backend available)
+- ⬜ Multi-user support with role-based access
+- ⬜ Integration with real GPS tracking devices
+- ⬜ Push notifications
+- ⬜ Mobile app (React Native)
+- ⬜ Advanced route optimization
+- ⬜ Fuel cost calculator
+- ⬜ Maintenance scheduling system
+- ⬜ Integration with external APIs (weather, traffic, etc.)
+- ⬜ Historical playback with route animation
+- ⬜ Custom report builder
+- ⬜ Email/SMS notifications
+- ⬜ Video telematics integration
+- ⬜ Driver behavior scoring
 
 ## 🤝 Contributing
 

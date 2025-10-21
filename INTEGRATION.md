@@ -9,8 +9,16 @@ This guide shows you how to integrate the React GPS tracking frontend with your 
 ## 📋 Prerequisites
 
 1. ✅ React frontend is running (already done)
-2. ⬜ Laravel backend setup (follow `BACKEND_SETUP.md`)
+2. ⬜ Laravel backend setup from [gps-track-backend](https://github.com/ridaFD/gps-track-backend)
 3. ⬜ Docker services running (optional but recommended)
+
+## 🔗 Backend Repository
+
+The backend is maintained in a separate repository:
+
+**👉 [gps-track-backend](https://github.com/ridaFD/gps-track-backend)**
+
+Clone and set it up following the instructions in the backend README.
 
 ---
 
