@@ -177,21 +177,6 @@ export const telemetryAPI = {
     apiClient.get(`/telemetry/diagnostics/${deviceId}`),
 };
 
-// Organizations/Tenants API (if multi-tenant)
-export const organizationsAPI = {
-  getCurrent: () => 
-    apiClient.get('/organizations/current'),
-  
-  update: (data) => 
-    apiClient.put('/organizations/current', data),
-  
-  getUsers: () => 
-    apiClient.get('/organizations/users'),
-  
-  inviteUser: (email, role) => 
-    apiClient.post('/organizations/users/invite', { email, role }),
-};
-
 // Webhooks API
 export const webhooksAPI = {
   getAll: () => 
