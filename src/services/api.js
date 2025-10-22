@@ -222,5 +222,38 @@ export const statisticsAPI = {
     apiClient.get('/statistics/activity', { params: { period } }),
 };
 
+// Organizations API (Multi-Tenancy)
+export const organizationsAPI = {
+  list: () => 
+    apiClient.get('/organizations'),
+  
+  getById: (id) => 
+    apiClient.get(`/organizations/${id}`),
+  
+  create: (data) => 
+    apiClient.post('/organizations', data),
+  
+  update: (id, data) => 
+    apiClient.put(`/organizations/${id}`, data),
+  
+  delete: (id) => 
+    apiClient.delete(`/organizations/${id}`),
+  
+  switch: (id) => 
+    apiClient.post(`/organizations/${id}/switch`),
+  
+  getUsers: (id) => 
+    apiClient.get(`/organizations/${id}/users`),
+  
+  inviteUser: (id, data) => 
+    apiClient.post(`/organizations/${id}/users`, data),
+  
+  removeUser: (id, userId) => 
+    apiClient.delete(`/organizations/${id}/users/${userId}`),
+  
+  getStats: (id) => 
+    apiClient.get(`/organizations/${id}/stats`),
+};
+
 export default apiClient;
 

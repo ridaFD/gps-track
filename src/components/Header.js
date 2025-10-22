@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Menu, Search, Bell, User, LogOut } from 'lucide-react';
 import { getUser, logout } from '../services/auth';
+import OrganizationSwitcher from './OrganizationSwitcher';
 import './Header.css';
 
 const Header = ({ toggleSidebar }) => {
@@ -30,6 +31,7 @@ const Header = ({ toggleSidebar }) => {
       </div>
       
       <div className="header-right">
+        <OrganizationSwitcher />
         <button className="header-icon-btn">
           <Bell size={20} />
           <span className="notification-badge">3</span>
