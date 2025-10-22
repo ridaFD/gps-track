@@ -6,36 +6,81 @@ window.Pusher = Pusher;
 
 let echoInstance = null;
 
-// Initialize Echo (Laravel WebSockets)
+// Initialize Echo (Pusher)
 export const initWebSocket = (authToken) => {
   if (echoInstance) {
     return echoInstance;
   }
 
-  const wsHost = process.env.REACT_APP_WS_HOST || 'localhost';
-  const wsPort = process.env.REACT_APP_WS_PORT || 6001;
-  const wsKey = process.env.REACT_APP_WS_KEY || 'your-app-key';
+  // Get Pusher configuration from environment variables
+  const pusherKey = process.env.REACT_APP_PUSHER_KEY;
+  const pusherCluster = process.env.REACT_APP_PUSHER_CLUSTER || 'us2';
+  const pusherHost = process.env.REACT_APP_PUSHER_HOST || '';
+  const pusherPort = process.env.REACT_APP_PUSHER_PORT ? parseInt(process.env.REACT_APP_PUSHER_PORT) : 443;
+  const pusherScheme = process.env.REACT_APP_PUSHER_SCHEME || 'https';
+  const forceTLS = pusherScheme === 'https';
 
-  echoInstance = new Echo({
+  // Warn if Pusher key is not configured
+  if (!pusherKey) {
+    console.warn('⚠️ REACT_APP_PUSHER_KEY not set. Real-time features disabled.');
+    console.warn('📋 Create a .env file with your Pusher credentials.');
+    console.warn('📖 See ENV_SETUP.md for instructions.');
+    return null;
+  }
+
+  console.log('🔌 Initializing Pusher connection...');
+  console.log(`   Cluster: ${pusherCluster}`);
+  console.log(`   Host: ${pusherHost || 'default'}`);
+  console.log(`   Port: ${pusherPort}`);
+  console.log(`   TLS: ${forceTLS}`);
+
+  const echoConfig = {
     broadcaster: 'pusher',
-    key: wsKey,
-    wsHost: wsHost,
-    wsPort: wsPort,
-    wssPort: wsPort,
-    forceTLS: false,
+    key: pusherKey,
+    cluster: pusherCluster,
+    forceTLS: forceTLS,
     encrypted: true,
     disableStats: true,
     enabledTransports: ['ws', 'wss'],
-    authEndpoint: `${process.env.REACT_APP_API_URL}/broadcasting/auth`,
+    authEndpoint: `${process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1'}/broadcasting/auth`,
     auth: {
       headers: {
         Authorization: `Bearer ${authToken}`,
         Accept: 'application/json',
       },
     },
-  });
+  };
 
-  return echoInstance;
+  // Add custom host/port if specified (for Soketi or local setup)
+  if (pusherHost) {
+    echoConfig.wsHost = pusherHost;
+    echoConfig.wsPort = pusherPort;
+    echoConfig.wssPort = pusherPort;
+  }
+
+  try {
+    echoInstance = new Echo(echoConfig);
+    
+    // Connection success handler
+    echoInstance.connector.pusher.connection.bind('connected', () => {
+      console.log('✅ Pusher connected successfully!');
+    });
+
+    // Connection error handler
+    echoInstance.connector.pusher.connection.bind('error', (err) => {
+      console.error('❌ Pusher connection error:', err);
+    });
+
+    // Disconnection handler
+    echoInstance.connector.pusher.connection.bind('disconnected', () => {
+      console.log('🔌 Pusher disconnected');
+    });
+
+    return echoInstance;
+  } catch (error) {
+    console.error('❌ Failed to initialize Pusher:', error);
+    return null;
+  }
 };
 
 // Get existing Echo instance
