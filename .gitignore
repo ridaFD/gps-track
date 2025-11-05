@@ -32,3 +32,28 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Backend (Laravel)
+backend/.env
+backend/.env.backup
+backend/.env.production
+backend/vendor/
+backend/node_modules/
+backend/storage/app/public/*
+!backend/storage/app/public/.gitkeep
+backend/storage/logs/*
+!backend/storage/logs/.gitkeep
+backend/storage/framework/cache/*
+!backend/storage/framework/cache/.gitkeep
+backend/storage/framework/sessions/*
+!backend/storage/framework/sessions/.gitkeep
+backend/storage/framework/views/*
+!backend/storage/framework/views/.gitkeep
+backend/bootstrap/cache/*
+!backend/bootstrap/cache/.gitignore
+backend/public/storage
+backend/public/build
+backend/public/hot
+backend/.phpunit.cache
+backend/.phpunit.result.cache
+backend/phpunit.xml.bak
